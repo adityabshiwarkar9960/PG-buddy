@@ -1,0 +1,286 @@
+* {
+    box-sizing: border-box;
+    font-family: 'Poppins', Arial, sans-serif;
+}
+
+body {
+    background: #f8f9fa;
+    margin: 0;
+    color: #2c3e50;
+}
+
+/* Navbar - Handled by style.css */
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2980b9;
+}
+
+.login-card h2 {
+    color: #2c3e50;
+    font-size: 26px;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+
+/* Layout */
+.login-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 40px;
+    padding: 80px 40px;
+    min-height: calc(100vh - 200px);
+}
+
+.login-card {
+    background: white;
+    color: #2c3e50;
+    padding: 40px;
+    width: 380px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    text-align: center;
+    border: 2px solid #f0f0f0;
+    transition: all 0.3s ease;
+}
+
+.login-card:hover {
+    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+    border-color: #2980b9;
+}
+
+/* Inputs */
+.login-card input {
+    width: 100%;
+    padding: 14px 18px;
+    margin: 10px 0;
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
+    background: #f8f9fa;
+    box-shadow: none;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    color: #2c3e50;
+}
+
+.login-card input:focus {
+    outline: none;
+    border-color: #2980b9;
+    background: white;
+    box-shadow: 0 4px 15px rgba(41, 128, 185, 0.15);
+}
+
+/* Select/Dropdown */
+.login-card select {
+    width: 100%;
+    padding: 14px 18px;
+    margin: 10px 0;
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
+    background: #f8f9fa;
+    box-shadow: none;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    color: #2c3e50;
+}
+
+.login-card select:focus {
+    outline: none;
+    border-color: #2980b9;
+    background: white;
+    box-shadow: 0 4px 15px rgba(41, 128, 185, 0.15);
+}
+
+.login-card select option {
+    background: white;
+    color: #2c3e50;
+    padding: 12px;
+}
+
+#actionBox {
+    max-width: 460px;
+    padding: 46px 42px;
+}
+
+#actionBox h2 {
+    font-size: 46px;
+    line-height: 1.2;
+    margin-bottom: 16px;
+}
+
+#actionBox p {
+    margin-bottom: 10px;
+}
+
+#actionBox button {
+    margin-top: 12px;
+}
+
+#actionBox button:first-of-type {
+    background: #2980b9;
+    box-shadow: 0 6px 18px rgba(41, 128, 185, 0.35);
+}
+
+#actionBox button:first-of-type:hover {
+    background: #2471a3;
+}
+
+#actionBox button:last-of-type {
+    background: #27ae60;
+    box-shadow: 0 6px 18px rgba(39, 174, 96, 0.35);
+}
+
+#actionBox button:last-of-type:hover {
+    background: #229954;
+}
+
+@media (max-width: 768px) {
+    #actionBox {
+        max-width: 100%;
+        padding: 34px 24px;
+    }
+
+    #actionBox h2 {
+        font-size: 34px;
+    }
+}
+
+/* Buttons */
+.login-card button,
+.logout-btn {
+    width: 100%;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 25px;
+    background: #2980b9;
+    color: white;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(41, 128, 185, 0.3);
+}
+
+.logout-btn {
+    width: auto;
+    padding: 10px 25px;
+}
+
+.login-card button:hover,
+.logout-btn:hover {
+    background: #2471a3;
+    box-shadow: 0 6px 20px rgba(41, 128, 185, 0.4);
+    transform: translateY(-2px);
+}
+
+.login-card a {
+    color: #2980b9;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.login-card a:hover {
+    color: #2471a3;
+    text-decoration: underline;
+}
+
+.login-card p {
+    margin-top: 20px;
+    font-size: 15px;
+    color: #666;
+}
+
+/* Profile */
+.profile-container {
+    display: flex;
+    justify-content: center;
+    padding: 80px 40px;
+    border: none;
+    min-height: calc(100vh - 200px);
+}
+
+.profile-card {
+    background: white;
+    color: #2c3e50;
+    padding: 50px 40px;
+    width: 500px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border: 2px solid #f0f0f0;
+    transition: all 0.3s ease;
+}
+
+.profile-card:hover {
+    border-color: #2980b9;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+}
+
+.profile-card h2 {
+    color: #2c3e50;
+    font-size: 32px;
+    margin-bottom: 30px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.profile-card p {
+    margin: 20px 0;
+    font-size: 16px;
+    line-height: 1.8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.profile-card strong {
+    color: #2980b9;
+    font-weight: 600;
+}
+
+.profile-card span {
+    color: #2c3e50;
+    margin-left: 10px;
+    word-break: break-word;
+    text-align: right;
+    flex: 1;
+}
+
+.profile-card button {
+    width: 100%;
+    padding: 14px 20px;
+    margin-top: 30px;
+    border: none;
+    border-radius: 25px;
+    background: #2980b9;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(41, 128, 185, 0.3);
+}
+
+.profile-card button:hover {
+    background: #2471a3;
+    box-shadow: 0 6px 20px rgba(41, 128, 185, 0.4);
+    transform: translateY(-2px);
+}
+
+.hidden {
+    display: none;
+}
+
+.profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 30px;
+}

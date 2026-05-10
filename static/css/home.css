@@ -1,0 +1,272 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', Arial, sans-serif;
+}
+
+body {
+    background: #FFFFFF;
+    color: #2c3e50;
+}
+
+/* Navbar - Handled by style.css */
+
+/* Search */
+.search-section {
+    text-align: center;
+    padding: 80px 20px 60px;
+    background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+    color: white;
+}
+
+.search-section h1 {
+    font-size: 42px;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.search-section p {
+    font-size: 18px;
+    margin-bottom: 30px;
+    opacity: 0.95;
+}
+
+.search-section input {
+    padding: 15px 20px;
+    width: 300px;
+    border-radius: 8px;
+    border: none;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.search-section input:focus {
+    outline: none;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.search-section button {
+    padding: 15px 35px;
+    border: none;
+    border-radius: 25px;
+    background: white;
+    color: #2980b9;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.search-section button:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+/* PG List */
+.pg-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    padding: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.pg-card {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border: 2px solid #f0f0f0;
+}
+
+.pg-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+    border-color: #2980b9;
+}
+
+.pg-card h3 {
+    color: #2980b9;
+    margin-bottom: 15px;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.pg-card p {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+/* Quick Options */
+.quick-options {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 60px 40px;
+    flex-wrap: wrap;
+    background: #f8f9fa;
+}
+
+.option-card {
+    width: 280px;
+    background: white;
+    color: #2c3e50;
+    padding: 40px 30px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.option-card:hover {
+    transform: translateY(-10px);
+    border-color: #27ae60;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+}
+
+.option-card h3 {
+    color: #2980b9;
+    margin-bottom: 10px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.option-card p {
+    color: #666;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* Featured PG */
+.featured {
+    padding: 60px 40px;
+    text-align: center;
+    background: white;
+}
+
+.featured h2 {
+    margin-bottom: 50px;
+    font-size: 36px;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.pg-list {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.pg-card {
+    width: 280px;
+    background: white;
+    color: #2c3e50;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border: 2px solid #f0f0f0;
+}
+
+.pg-card:hover {
+    transform: translateY(-10px);
+    border-color: #2980b9;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+}
+
+.pg-card h3 {
+    color: #2980b9;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.pg-card p {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.pg-card button {
+    margin-top: 20px;
+    padding: 12px 0;
+    width: 100%;
+    border: none;
+    background: #2980b9;
+    color: white;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.pg-card button:hover {
+    background: #2471a3;
+    transform: scale(1.05);
+}
+
+.enroll-btn {
+    margin-top: 20px;
+    width: 100%;
+    padding: 12px 0;
+    border: none;
+    border-radius: 25px;
+    background: #2980b9;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 15px;
+}
+
+.enroll-btn:hover {
+    background: #2471a3;
+    transform: scale(1.05);
+}
+
+.profile-card {
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 40px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border: 2px solid #f0f0f0;
+}
+
+.profile-card h2 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-weight: 600;
+}
+
+.profile-card button {
+    width: 100%;
+    padding: 12px;
+    background: #2980b9;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.profile-card button:hover {
+    background: #2471a3;
+    transform: scale(1.05);
+}

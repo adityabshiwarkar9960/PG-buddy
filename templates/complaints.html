@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/complaints.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="login-container">
+    <div class="login-card">
+        <h2>Student Complaints & Feedback</h2>
+
+        <form method="post">
+            <input type="text" name="name" placeholder="Your Name" value="{{ g.user.name if g.user else '' }}" required>
+            <input type="email" name="email" placeholder="Email" value="{{ g.user.email if g.user else '' }}" required>
+
+            {% if g.user and g.user['role'] == 'Student' %}
+                <input type="text" name="pg" placeholder="PG Name" value="{{ enrolled_pg.name if enrolled_pg else '' }}" {% if enrolled_pg %}readonly{% endif %}>
+                <input type="hidden" name="pg_id" value="{{ enrolled_pg.id if enrolled_pg else '' }}">
+            {% else %}
+                <input type="text" name="pg" placeholder="PG Name (Optional)">
+            {% endif %}
+
+            <select name="type">
+                <option value="Complaint">Complaint</option>
+                <option value="Feedback">Feedback</option>
+            </select>
+
+            <textarea name="message" placeholder="Write your issue or feedback..." required></textarea>
+
+            <div class="btn-group">
+                <button class="login-btn" type="submit">Submit</button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,759 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+    .dashboard-container {
+        padding: 40px;
+        background: #f8f9fa;
+        min-height: 100vh;
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 30px;
+        position: relative;
+    }
+
+    .owner-info,
+    .form-section,
+    .pg-item,
+    .student-item {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #e6e9ec;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .owner-info {
+        max-width: 760px;
+        margin: 0 auto 24px;
+        padding: 24px;
+    }
+
+    .owner-info p {
+        margin: 10px 0;
+    }
+
+    .owner-profile-form {
+        margin-top: 12px;
+    }
+
+    .owner-profile-form .form-grid {
+        margin-top: 10px;
+    }
+
+    .owner-profile-form label {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .owner-profile-form input {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid #d8dde3;
+        font-size: 14px;
+    }
+
+    .notification-hub {
+        max-width: 980px;
+        margin: 0 auto 18px;
+        display: flex;
+        justify-content: flex-end;
+        position: relative;
+    }
+
+    .notification-toggle {
+        position: relative;
+        border: none;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #2980b9;
+        color: #fff;
+        font-size: 20px;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(41, 128, 185, 0.35);
+    }
+
+    .notification-badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        min-width: 20px;
+        height: 20px;
+        border-radius: 999px;
+        background: #e74c3c;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 6px;
+        border: 2px solid #fff;
+    }
+
+    .notification-panel {
+        position: absolute;
+        top: 54px;
+        right: 0;
+        width: min(520px, calc(100vw - 40px));
+        max-height: 70vh;
+        overflow-y: auto;
+        background: #fff;
+        border: 1px solid #dfe4ea;
+        border-radius: 14px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15);
+        padding: 14px;
+        z-index: 20;
+    }
+
+    .notification-panel.hidden {
+        display: none;
+    }
+
+    .notification-panel h3 {
+        margin: 0 0 10px;
+        font-size: 18px;
+    }
+
+    .notification-item {
+        border: 1px solid #e5e8ee;
+        border-radius: 12px;
+        padding: 12px;
+        background: #fbfcfe;
+        margin-bottom: 10px;
+    }
+
+    .notification-item p {
+        margin: 6px 0;
+    }
+
+    .type-chip {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+        background: #7f8c8d;
+    }
+
+    .type-chip.feedback {
+        background: #8e44ad;
+    }
+
+    .type-chip.complaint {
+        background: #e67e22;
+    }
+
+    .notification-form {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #dfe4ea;
+    }
+
+    .notification-form select,
+    .notification-form input {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #d8dde3;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .status-chip {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 2px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .status-pending {
+        background: #7f8c8d;
+    }
+
+    .status-progress {
+        background: #f39c12;
+    }
+
+    .status-resolved {
+        background: #27ae60;
+    }
+
+    .form-section {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    .form-section h2 {
+        margin-top: 0;
+        text-align: center;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .form-grid .full {
+        grid-column: 1 / -1;
+    }
+
+    .form-section input,
+    .form-section select,
+    .form-section textarea {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #d8dde3;
+        font-size: 14px;
+    }
+
+    .form-section textarea {
+        resize: vertical;
+        min-height: 90px;
+    }
+
+    .button-group {
+        margin-top: 14px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .button-group button,
+    .button-group a {
+        border: none;
+        border-radius: 24px;
+        padding: 10px 16px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        color: #fff;
+        background: #2980b9;
+    }
+
+    .button-group a {
+        background: #7f8c8d;
+    }
+
+    .map-box {
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 10px;
+        background: #fafafa;
+    }
+
+    #ownerMap {
+        height: 220px;
+        margin-top: 8px;
+        border-radius: 8px;
+    }
+
+    .preview-grid {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .preview-grid img {
+        width: 100%;
+        height: 90px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+    }
+
+    .pg-list-section {
+        max-width: 980px;
+        margin: 30px auto 0;
+    }
+
+    .pg-list-section h2 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .pg-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+        gap: 16px;
+        align-items: start;
+    }
+
+    .pg-item {
+        padding: 18px;
+        margin-bottom: 0;
+    }
+
+    .pg-image-collage {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin: 10px 0;
+    }
+
+    .pg-image-collage img {
+        width: 100%;
+        height: 90px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+    }
+
+    .inline-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+
+    .inline-actions form {
+        display: inline;
+    }
+
+    .inline-actions button,
+    .inline-actions a {
+        border: none;
+        border-radius: 20px;
+        padding: 8px 12px;
+        color: #fff;
+        text-decoration: none;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-edit {
+        background: #27ae60;
+    }
+
+    .btn-delete,
+    .btn-remove {
+        background: #e74c3c;
+    }
+
+    .student-item {
+        margin-top: 10px;
+        padding: 12px;
+    }
+
+    .student-item p {
+        margin: 5px 0;
+    }
+
+    .student-item textarea {
+        width: 100%;
+        min-height: 70px;
+        margin-top: 8px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+    .student-id-preview {
+        margin-top: 8px;
+        width: min(240px, 100%);
+        height: auto;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+    }
+
+    .message-history {
+        margin-top: 8px;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 8px;
+        background: #fafafa;
+    }
+
+    @media (max-width: 900px) {
+        .dashboard-container {
+            padding: 18px;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .preview-grid,
+        .pg-image-collage {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .pg-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>PG Owner Dashboard</h1>
+    </div>
+
+    <div class="owner-info">
+        <h2>Welcome Back</h2>
+        <p><strong>Email:</strong> {{ owner.email }}</p>
+
+        <form class="owner-profile-form" method="post" action="{{ url_for('update_owner_profile') }}">
+            <div class="form-grid">
+                <div>
+                    <label for="ownerName">Name</label>
+                    <input id="ownerName" name="ownerName" type="text" value="{{ owner.name }}" required>
+                </div>
+                <div>
+                    <label for="ownerContact">Contact</label>
+                    <input id="ownerContact" name="contact" type="text" maxlength="10" pattern="[0-9]{10}" value="{{ owner.contact or '' }}" required>
+                </div>
+            </div>
+            <div class="button-group">
+                <button type="submit">Update Profile</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="notification-hub" id="notificationHub">
+        <button class="notification-toggle" id="notificationToggle" type="button" aria-label="Open notifications">
+            🔔
+            {% if notification_badge_count > 0 %}
+            <span class="notification-badge">{{ notification_badge_count }}</span>
+            {% endif %}
+        </button>
+
+        <div class="notification-panel hidden" id="notificationPanel">
+            <h3>Notifications</h3>
+            {% if complaint_notifications %}
+                {% for notification in complaint_notifications %}
+                <div class="notification-item">
+                    <p>
+                        <span class="type-chip {% if notification.type|lower == 'feedback' %}feedback{% else %}complaint{% endif %}">
+                            {{ notification.type }}
+                        </span>
+                    </p>
+                    <p><strong>PG:</strong> {{ notification.owner_pg_name or 'Unknown PG' }}</p>
+                    <p><strong>From:</strong> {{ notification.student_name_masked }}</p>
+                    <p><strong>Message:</strong> {{ notification.message }}</p>
+
+                    {% if notification.type|lower == 'complaint' %}
+                    <p>
+                        <strong>Status:</strong>
+                        {% if notification.status == 'Resolved' %}
+                            <span class="status-chip status-resolved">Resolved</span>
+                        {% elif notification.status == 'In Progress' %}
+                            <span class="status-chip status-progress">In Progress</span>
+                        {% else %}
+                            <span class="status-chip status-pending">Pending</span>
+                        {% endif %}
+                    </p>
+                    {% if notification.owner_note %}
+                    <p><strong>Last Owner Note:</strong> {{ notification.owner_note }}</p>
+                    {% endif %}
+
+                    <form class="notification-form" method="post" action="{{ url_for('owner_update_complaint_status', complaint_id=notification.id) }}">
+                        <select name="status" required>
+                            <option value="Pending" {% if notification.status == 'Pending' %}selected{% endif %}>Pending</option>
+                            <option value="In Progress" {% if notification.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                            <option value="Resolved" {% if notification.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                        </select>
+                        <input type="text" name="owner_note" maxlength="300" placeholder="Optional note for student (e.g. under process, solved today)">
+                        <div class="inline-actions">
+                            <button class="btn-edit" type="submit">Update & Notify Student</button>
+                        </div>
+                    </form>
+                    {% endif %}
+
+                    <p><small>{{ notification.created_at }}</small></p>
+                </div>
+                {% endfor %}
+            {% else %}
+            <p>No notifications yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h2>{% if edit_pg %}Edit PG{% else %}Add New PG{% endif %}</h2>
+
+        <form method="post" enctype="multipart/form-data" action="{% if edit_pg %}{{ url_for('owner_update_pg', pg_id=edit_pg.id) }}{% else %}{{ url_for('owner_create_pg') }}{% endif %}">
+            <input type="hidden" name="existingImageUrls" id="existingImageUrls" value="{{ (edit_pg.image_urls if edit_pg else []) | tojson }}">
+
+            <div class="form-grid">
+                <input name="pgName" type="text" class="full" placeholder="PG Name" value="{{ edit_pg.name if edit_pg else '' }}" required>
+                <input name="pgArea" type="text" placeholder="Area / Location" value="{{ edit_pg.area if edit_pg else '' }}" required>
+                <input name="pgCity" type="text" placeholder="City" value="{{ edit_pg.city if edit_pg else '' }}" required>
+                <input name="pgRent" type="number" placeholder="Monthly Rent" min="1" value="{{ edit_pg.rent if edit_pg else '' }}" required>
+                <input name="pgVacantSeats" type="number" placeholder="Vacant Seats" min="0" value="{{ edit_pg.vacant_seats if edit_pg else '' }}" required>
+
+                <select name="pgGender" required>
+                    <option value="" disabled {% if not edit_pg %}selected{% endif %}>Select PG Type</option>
+                    <option value="Male" {% if edit_pg and edit_pg.gender == 'Male' %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if edit_pg and edit_pg.gender == 'Female' %}selected{% endif %}>Female</option>
+                </select>
+
+                <input name="pgWardenContact" type="text" maxlength="10" pattern="[0-9]{10}" placeholder="Warden Contact Number" value="{{ edit_pg.warden_contact if edit_pg else '' }}" required>
+                <input name="pgOwnerContact" type="text" maxlength="10" pattern="[0-9]{10}" placeholder="Owner Contact Number" value="{{ edit_pg.owner_contact if edit_pg else owner.contact or '' }}" required>
+
+                <textarea name="pgFacilities" class="full" placeholder="Facilities (WiFi, Food, Laundry, etc.)">{{ edit_pg.facilities if edit_pg else '' }}</textarea>
+
+                <div class="full map-box">
+                    <label><strong>Select Location on Map (optional)</strong></label>
+                    <div class="button-group" style="margin-top:8px;">
+                        <button type="button" onclick="setCurrentLocation()">Select Current Location</button>
+                    </div>
+                    <p id="ownerLocationStatus"></p>
+                    <div id="ownerMap"></div>
+                    <input type="hidden" name="pgLat" id="pgLat" value="{{ edit_pg.lat if edit_pg and edit_pg.lat is not none else '' }}">
+                    <input type="hidden" name="pgLng" id="pgLng" value="{{ edit_pg.lng if edit_pg and edit_pg.lng is not none else '' }}">
+                </div>
+
+                <div class="full">
+                    <label for="pgImages"><strong>Add PG Images (optional, up to 4)</strong></label>
+                    <input id="pgImages" name="pgImages" type="file" accept="image/*" multiple>
+                    <div class="preview-grid" id="previewGrid">
+                        {% if edit_pg and edit_pg.image_urls %}
+                            {% for image in edit_pg.image_urls %}
+                            <img src="{{ url_for('static', filename=image) }}" alt="PG Image">
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit">{% if edit_pg %}Update PG{% else %}Save PG{% endif %}</button>
+                {% if edit_pg %}
+                <a href="{{ url_for('owner_dashboard') }}">Cancel Edit</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <div class="pg-list-section">
+        <h2>My PGs</h2>
+        {% if not owner_pgs %}
+        <p style="text-align:center;">No PGs added yet. Add your first PG above.</p>
+        {% endif %}
+
+        <div class="pg-grid">
+        {% for pg in owner_pgs %}
+        <div class="pg-item">
+            <h3>{{ pg.name }}</h3>
+
+            {% if pg.image_urls %}
+            <div class="pg-image-collage">
+                {% for image in pg.image_urls %}
+                <img src="{{ url_for('static', filename=image) }}" alt="PG Image">
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <p><strong>Location:</strong> {{ pg.area|title }}, {{ pg.city|title }}</p>
+            <p><strong>Rent:</strong> {{ pg.rent|inr }}/month</p>
+            <p><strong>Type:</strong> {{ pg.gender }} PG</p>
+            <p><strong>Facilities:</strong> {{ pg.facilities or 'Not listed' }}</p>
+            <p><strong>Vacant Seats:</strong> {{ pg.vacant_seats }}</p>
+            <p><strong>Warden Contact:</strong> {{ pg.warden_contact or 'N/A' }}</p>
+            <p><strong>Owner Contact:</strong> {{ pg.owner_contact or 'N/A' }}</p>
+
+            {% if pg.lat is not none and pg.lng is not none %}
+            <p><strong>Coordinates:</strong> {{ pg.lat }}, {{ pg.lng }}</p>
+            {% endif %}
+
+            <div class="inline-actions">
+                <a class="btn-edit" href="{{ url_for('owner_dashboard', edit_pg_id=pg.id) }}">Edit</a>
+                <form method="post" action="{{ url_for('owner_delete_pg', pg_id=pg.id) }}" onsubmit="return confirm('Delete this PG?');">
+                    <button class="btn-delete" type="submit">Delete</button>
+                </form>
+            </div>
+
+            <h4 style="margin-top:16px;">Enrolled Students ({{ pg.enrolled_students|length }})</h4>
+            {% if not pg.enrolled_students %}
+            <p>No students enrolled yet.</p>
+            {% endif %}
+
+            {% for student in pg.enrolled_students %}
+            <div class="student-item">
+                <p><strong>{{ student.student_name }}</strong> ({{ student.email }})</p>
+                <p><strong>Contact:</strong> {{ student.contact }} | <strong>College:</strong> {{ student.college }}</p>
+                <p><strong>College ID:</strong> {{ student.college_id or 'N/A' }}</p>
+                <p><strong>Parents:</strong> {{ student.parents_name }} ({{ student.parents_contact }})</p>
+                <p><strong>Address:</strong> {{ student.address }}</p>
+                <p><strong>Enrolled At:</strong> {{ student.enrolled_at }}</p>
+
+                {% if student.college_id_image %}
+                <p><strong>ID Proof:</strong> <a href="{{ url_for('static', filename=student.college_id_image) }}" target="_blank" rel="noopener">View Uploaded ID</a></p>
+                <img class="student-id-preview" src="{{ url_for('static', filename=student.college_id_image) }}" alt="College ID for {{ student.student_name }}">
+                {% endif %}
+
+                <div class="message-history">
+                    <p><strong>Owner Messages:</strong></p>
+                    {% if student.owner_messages %}
+                    <ul>
+                        {% for msg in student.owner_messages %}
+                        <li>{{ msg.text }} {% if msg.sent_at %}<small>({{ msg.sent_at }})</small>{% endif %}</li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p>No messages yet.</p>
+                    {% endif %}
+                </div>
+
+                <form method="post" action="{{ url_for('owner_send_message', enrollment_id=student.id) }}">
+                    <textarea name="message" maxlength="500" placeholder="Type a message for this student"></textarea>
+                    <div class="inline-actions">
+                        <button class="btn-edit" type="submit">Send Message</button>
+                    </div>
+                </form>
+
+                <form method="post" action="{{ url_for('owner_remove_student', enrollment_id=student.id) }}" onsubmit="return confirm('Remove this student from PG enrollment?');">
+                    <div class="inline-actions">
+                        <button class="btn-remove" type="submit">Remove Student</button>
+                    </div>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const MAX_FILES = 4;
+let ownerMap = null;
+let ownerMarker = null;
+
+function setOwnerLocationStatus(message, isError = false) {
+    const el = document.getElementById("ownerLocationStatus");
+    if (!el) return;
+    el.textContent = message || "";
+    el.style.color = isError ? "#e74c3c" : "#555";
+}
+
+function setMapSelection(lat, lng, zoom = 15) {
+    const latInput = document.getElementById("pgLat");
+    const lngInput = document.getElementById("pgLng");
+    if (!latInput || !lngInput) return;
+
+    latInput.value = Number(lat).toFixed(6);
+    lngInput.value = Number(lng).toFixed(6);
+
+    if (ownerMap) {
+        ownerMap.setView([lat, lng], zoom);
+        if (ownerMarker) {
+            ownerMarker.setLatLng([lat, lng]);
+        } else {
+            ownerMarker = L.marker([lat, lng]).addTo(ownerMap);
+        }
+    }
+}
+
+function initOwnerMap() {
+    const mapEl = document.getElementById("ownerMap");
+    if (!mapEl || ownerMap) return;
+
+    ownerMap = L.map("ownerMap").setView([20.5937, 78.9629], 5);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+    }).addTo(ownerMap);
+
+    ownerMap.on("click", function (event) {
+        setMapSelection(event.latlng.lat, event.latlng.lng, ownerMap.getZoom());
+        setOwnerLocationStatus(`Selected location: ${event.latlng.lat.toFixed(6)}, ${event.latlng.lng.toFixed(6)}`);
+    });
+
+    const initialLat = document.getElementById("pgLat").value;
+    const initialLng = document.getElementById("pgLng").value;
+    if (initialLat && initialLng) {
+        setMapSelection(Number(initialLat), Number(initialLng), 15);
+    }
+}
+
+function setCurrentLocation() {
+    if (!navigator.geolocation) {
+        setOwnerLocationStatus("Geolocation is not supported by your browser.", true);
+        return;
+    }
+
+    initOwnerMap();
+    setOwnerLocationStatus("Fetching your current location...");
+
+    navigator.geolocation.getCurrentPosition(
+        function (position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            setMapSelection(lat, lng, 16);
+            setOwnerLocationStatus(`Current location selected: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+        },
+        function (_error) {
+            setOwnerLocationStatus("Could not fetch current location. You can click on the map manually.", true);
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
+}
+
+function bindImagePreview() {
+    const input = document.getElementById("pgImages");
+    const preview = document.getElementById("previewGrid");
+    if (!input || !preview) return;
+
+    input.addEventListener("change", function () {
+        const files = Array.from(input.files || []);
+        if (files.length > MAX_FILES) {
+            alert(`Please select up to ${MAX_FILES} images.`);
+            input.value = "";
+            return;
+        }
+
+        preview.innerHTML = "";
+        files.forEach((file) => {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const img = document.createElement("img");
+                img.src = event.target.result;
+                img.alt = "Preview";
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+}
+
+window.addEventListener("DOMContentLoaded", function () {
+    initOwnerMap();
+    bindImagePreview();
+
+    const toggle = document.getElementById("notificationToggle");
+    const panel = document.getElementById("notificationPanel");
+    const hub = document.getElementById("notificationHub");
+    if (toggle && panel && hub) {
+        toggle.addEventListener("click", function () {
+            panel.classList.toggle("hidden");
+        });
+
+        document.addEventListener("click", function (event) {
+            if (!hub.contains(event.target)) {
+                panel.classList.add("hidden");
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

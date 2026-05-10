@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-content">
+        <div class="logo-box">
+            <div class="logo-text">PG<br><span>Buddy</span></div>
+        </div>
+
+        <h1 class="headline">"A Better Stay For A Better Start"</h1>
+        <p class="hero-subtitle">Find verified PGs, essential resources, and community support in one place.</p>
+
+        <div class="hero-buttons">
+            <a class="btn btn-primary" href="{{ url_for('home') }}">Find PGs Now</a>
+            <a class="btn btn-secondary" href="{{ url_for('resources') }}">Explore Resources</a>
+        </div>
+    </div>
+</section>
+
+<section class="why-choose">
+    <h2>Why Choose PG Buddy?</h2>
+    <div class="features">
+        <a class="card card-link" href="{{ url_for('home') }}">
+            <div class="card-icon">✨</div>
+            <h3>Verified PGs</h3>
+            <p>Browse verified properties with transparent pricing and clear details.</p>
+        </a>
+
+        <a class="card card-link" href="{{ url_for('resources') }}">
+            <div class="card-icon">🗺️</div>
+            <h3>Smart Location Guide</h3>
+            <p>Discover nearby essentials such as food, laundry, hospitals, and transport.</p>
+        </a>
+
+        <a class="card card-link" href="{{ url_for('student_friendly') }}">
+            <div class="card-icon">🤝</div>
+            <h3>Student Community</h3>
+            <p>Find student-focused services for support, safety, and communication.</p>
+        </a>
+
+        <a class="card card-link" href="{{ url_for('complaints') }}">
+            <div class="card-icon">💬</div>
+            <h3>Complaint Support</h3>
+            <p>Raise complaints or feedback quickly and track them in a structured backend.</p>
+        </a>
+    </div>
+</section>
+
+<section class="stats-section">
+    <h2>Trusted by Students</h2>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>5000+</h3>
+            <p>Happy Students</p>
+        </div>
+        <div class="stat-card">
+            <h3>2000+</h3>
+            <p>Verified PGs</p>
+        </div>
+        <div class="stat-card">
+            <h3>50+</h3>
+            <p>Cities Covered</p>
+        </div>
+        <div class="stat-card">
+            <h3>98%</h3>
+            <p>User Satisfaction</p>
+        </div>
+    </div>
+</section>
+
+<section class="cta-section">
+    <h2>Ready to Find Your Perfect PG?</h2>
+    <p>Join thousands of students and PG owners on the Python-powered PG Buddy platform.</p>
+    <a class="btn btn-primary btn-large" href="{{ url_for('login') }}">Get Started</a>
+</section>
+{% endblock %}

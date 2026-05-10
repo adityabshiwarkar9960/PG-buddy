@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+<style>
+    .search-note {
+        margin-top: 12px;
+        font-size: 14px;
+        opacity: 0.9;
+    }
+
+    .pg-image-collage {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .pg-image-collage img {
+        width: 100%;
+        height: 110px;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 1px solid #e5e5e5;
+    }
+
+    .owner-badge {
+        background: #57C785;
+        color: #fff;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        margin-left: 8px;
+    }
+
+    .enroll-btn {
+        display: inline-block;
+        text-align: center;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="search-section">
+    <h1>Find PG Near You</h1>
+    <p>Search by area or city, then open complete PG details.</p>
+    <form method="get" action="{{ url_for('home') }}">
+        <input type="text" name="q" id="areaInput" placeholder="Enter city or area" value="{{ query }}">
+        <button type="submit">Search</button>
+    </form>
+    {% if g.user and g.user.role == 'Student' and g.user.gender %}
+    <p class="search-note">Student filter active: showing {{ g.user.gender }} PGs</p>
+    {% endif %}
+</section>
+
+{% if query %}
+<section class="pg-list" id="pgList">
+    {% if pgs|length == 0 %}
+    <p style="grid-column: 1/-1; text-align:center; font-size:16px;">No PGs found for your search.</p>
+    {% endif %}
+
+    {% for pg in pgs %}
+    <div class="pg-card">
+        {% if pg.image_urls %}
+        <div class="pg-image-collage">
+            {% for image in pg.image_urls[:4] %}
+            <img src="{{ url_for('static', filename=image) }}" alt="PG Image">
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <h3>
+            {{ pg.name }}
+            {% if pg.owner_id %}<span class="owner-badge">Verified</span>{% endif %}
+        </h3>
+        <p>📍 {{ pg.area|title }}, {{ pg.city|title }}</p>
+        <p>💰 {{ pg.rent|inr }} / month</p>
+        <p>🏠 {{ pg.gender }} PG</p>
+        <p>🛏️ Vacant Seats: {{ pg.vacant_seats }}</p>
+        <p>🛠️ {{ pg.facilities or 'Facilities not listed' }}</p>
+        <a class="enroll-btn" href="{{ url_for('pg_details', pg_id=pg.id) }}">View Details & Enroll</a>
+    </div>
+    {% endfor %}
+</section>
+{% else %}
+<section class="pg-list" id="pgList">
+    <p style="grid-column: 1/-1; text-align:center; font-size:16px;">Search by city or area to see PG listings.</p>
+</section>
+
+<section class="quick-options" id="quickOptions">
+    <div class="option-card">
+        <h3>Nearby PG</h3>
+        <p>Find PGs near your college or office.</p>
+    </div>
+
+    <div class="option-card">
+        <h3>Student Resources</h3>
+        <p>Mess, laundry, medical and shops nearby.</p>
+    </div>
+
+    <div class="option-card">
+        <h3>Contact Owner</h3>
+        <p>Direct contact details from verified listings.</p>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

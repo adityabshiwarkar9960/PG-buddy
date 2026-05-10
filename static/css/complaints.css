@@ -1,0 +1,114 @@
+* {
+    box-sizing: border-box;
+    font-family: 'Poppins', Arial, sans-serif;
+}
+
+body {
+    background: #f8f9fa;
+    margin: 0;
+    color: #2c3e50;
+}
+
+/* Navbar - Handled by style.css */
+
+.nav-logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2980b9;
+}
+
+/* Layout */
+.login-container {
+    display: flex;
+    justify-content: center;
+    padding: 80px 40px;
+    min-height: calc(100vh - 200px);
+}
+
+/* Card */
+.login-card {
+    background: white;
+    color: #2c3e50;
+    padding: 50px 40px;
+    width: 500px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    text-align: center;
+    border: 2px solid #f0f0f0;
+    transition: all 0.3s ease;
+}
+
+.login-card:hover {
+    border-color: #2980b9;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+}
+
+.login-card h2 {
+    color: #2c3e50;
+    font-size: 28px;
+    margin-bottom: 30px;
+    font-weight: 600;
+}
+
+/* Inputs */
+.login-card input,
+.login-card select,
+.login-card textarea {
+    width: 100%;
+    padding: 14px 18px;
+    margin: 10px 0;
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
+    background: #f8f9fa;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    color: #2c3e50;
+}
+
+.login-card input:focus,
+.login-card select:focus,
+.login-card textarea:focus {
+    outline: none;
+    border-color: #2980b9;
+    background: white;
+    box-shadow: 0 4px 15px rgba(41, 128, 185, 0.15);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 120px;
+    font-family: 'Poppins', Arial, sans-serif;
+}
+
+/* Buttons */
+.btn-group {
+    display: flex;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+.login-btn {
+    padding: 14px 40px;
+    border: none;
+    border-radius: 25px;
+    background: #2980b9;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(41, 128, 185, 0.3);
+}
+
+.login-btn:hover {
+    background: #2471a3;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(41, 128, 185, 0.4);
+}
+
+#msg {
+    margin-top: 20px;
+    color: #27ae60;
+    font-weight: 600;
+    font-size: 15px;
+}

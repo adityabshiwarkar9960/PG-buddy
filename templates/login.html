@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="login-container">
+    <div class="login-card" id="actionBox">
+        <h2>Welcome to PG Buddy</h2>
+        <p>Choose an option to get started:</p>
+        <button type="button" onclick="selectAction('login')">Login</button>
+        <button type="button" onclick="selectAction('register')">Create Account</button>
+    </div>
+
+    <div class="login-card hidden" id="loginRoleBox">
+        <h2>Select Role to Login</h2>
+        <button type="button" onclick="selectLoginRole('student')">Student</button>
+        <button type="button" onclick="selectLoginRole('owner')">PG Owner</button>
+        <p><a href="#" onclick="goBackToAction(event)">Back</a></p>
+    </div>
+
+    <div class="login-card hidden" id="registerRoleBox">
+        <h2>Select Role to Register</h2>
+        <button type="button" onclick="selectRegisterRole('student')">Student</button>
+        <button type="button" onclick="selectRegisterRole('owner')">PG Owner</button>
+        <p><a href="#" onclick="goBackToAction(event)">Back</a></p>
+    </div>
+
+    <div class="login-card hidden" id="studentLoginBox">
+        <h2>Student Login</h2>
+        <form method="post" action="{{ url_for('auth_login') }}">
+            <input type="hidden" name="role" value="Student">
+            <input name="email" type="email" placeholder="Login Email" required>
+            <input name="password" type="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <p><a href="#" onclick="goBackToLoginRole(event)">Back</a></p>
+    </div>
+
+    <div class="login-card hidden" id="ownerLoginBox">
+        <h2>PG Owner Login</h2>
+        <form method="post" action="{{ url_for('auth_login') }}">
+            <input type="hidden" name="role" value="Owner">
+            <input name="email" type="email" placeholder="Login Email" required>
+            <input name="password" type="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <p><a href="#" onclick="goBackToLoginRole(event)">Back</a></p>
+    </div>
+
+    <div class="login-card hidden" id="studentRegisterBox">
+        <h2>Student Registration</h2>
+        <form method="post" action="{{ url_for('auth_register') }}">
+            <input type="hidden" name="role" value="Student">
+            <input name="name" placeholder="Full Name" required>
+            <input name="email" type="email" placeholder="Email" required>
+            <input name="password" type="password" placeholder="Password" required>
+            <select name="gender" required>
+                <option value="" disabled selected>Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
+            <input name="extra" placeholder="College Name" required>
+            <input name="contact" placeholder="Contact Number" maxlength="10" pattern="[0-9]{10}" required>
+            <button type="submit">Create Account</button>
+        </form>
+        <p><a href="#" onclick="goBackToRegisterRole(event)">Back</a></p>
+    </div>
+
+    <div class="login-card hidden" id="ownerRegisterBox">
+        <h2>PG Owner Registration</h2>
+        <form method="post" action="{{ url_for('auth_register') }}">
+            <input type="hidden" name="role" value="Owner">
+            <input type="hidden" name="extra" value="PG Owner">
+            <input name="name" placeholder="Owner Name" required>
+            <input name="email" type="email" placeholder="Email" required>
+            <input name="password" type="password" placeholder="Password" required>
+            <select name="gender" required>
+                <option value="" disabled selected>Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
+            <input name="contact" placeholder="Contact Number" maxlength="10" pattern="[0-9]{10}" required>
+            <button type="submit">Create Account</button>
+        </form>
+        <p><a href="#" onclick="goBackToRegisterRole(event)">Back</a></p>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showOnly(id) {
+    const ids = [
+        "actionBox", "loginRoleBox", "registerRoleBox",
+        "studentLoginBox", "ownerLoginBox", "studentRegisterBox", "ownerRegisterBox"
+    ];
+    ids.forEach((item) => {
+        const el = document.getElementById(item);
+        if (!el) return;
+        if (item === id) {
+            el.classList.remove("hidden");
+        } else {
+            el.classList.add("hidden");
+        }
+    });
+}
+
+function selectAction(action) {
+    if (action === "login") showOnly("loginRoleBox");
+    if (action === "register") showOnly("registerRoleBox");
+}
+
+function selectLoginRole(role) {
+    if (role === "student") showOnly("studentLoginBox");
+    if (role === "owner") showOnly("ownerLoginBox");
+}
+
+function selectRegisterRole(role) {
+    if (role === "student") showOnly("studentRegisterBox");
+    if (role === "owner") showOnly("ownerRegisterBox");
+}
+
+function goBackToAction(event) {
+    event.preventDefault();
+    showOnly("actionBox");
+}
+
+function goBackToLoginRole(event) {
+    event.preventDefault();
+    showOnly("loginRoleBox");
+}
+
+function goBackToRegisterRole(event) {
+    event.preventDefault();
+    showOnly("registerRoleBox");
+}
+</script>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/resources.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Student Resources</h1>
+    <p>Everything you need near your PG</p>
+</section>
+
+<section class="resources" id="resourceList">
+    {% if not g.user %}
+    <p style="grid-column: 1/-1; text-align:center;">Please login to see resources for your enrolled PG.</p>
+    {% elif g.user.role != 'Student' %}
+    <p style="grid-column: 1/-1; text-align:center;">Resources are shown for student enrollments.</p>
+    {% elif not enrolled_pg %}
+    <p style="grid-column: 1/-1; text-align:center;">Enroll in a PG to see available resources.</p>
+    {% elif not resource_types %}
+    <p style="grid-column: 1/-1; text-align:center;">No resources available for {{ enrolled_pg.pg_city }} yet.</p>
+    {% else %}
+        {% for resource_type in resource_types %}
+        <a class="resource-card" style="text-decoration:none;" href="{{ url_for('resource_details', type=resource_type) }}">
+            <div class="icon">
+                {% if resource_type == 'Mess & Food' %}🍽️{% endif %}
+                {% if resource_type == 'Laundry' %}🧺{% endif %}
+                {% if resource_type == 'Medical' %}🏥{% endif %}
+                {% if resource_type == 'Shops' %}🛒{% endif %}
+                {% if resource_type == 'Transport' %}🚍{% endif %}
+                {% if resource_type == 'Study Centers' %}📚{% endif %}
+                {% if resource_type == 'Gym' %}🏋️{% endif %}
+            </div>
+            <h3>{{ resource_type }}</h3>
+            <p>Click to view details</p>
+        </a>
+        {% endfor %}
+
+        <div class="resource-card" style="grid-column: 1/-1; text-align:left;">
+            <p><strong>Your Enrolled PG:</strong> {{ enrolled_pg.pg_name }}, {{ enrolled_pg.pg_city }}</p>
+            <p style="font-size: 12px; color: #666; margin-top: 8px;">Resources shown for this location.</p>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

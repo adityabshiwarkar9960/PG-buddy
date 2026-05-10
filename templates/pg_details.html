@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pg-details.css') }}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+    .pg-image-collage {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .pg-image-collage img {
+        width: 100%;
+        height: 130px;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+    }
+
+    .info-note {
+        margin-top: 10px;
+        font-size: 14px;
+        color: #666;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="login-container">
+    <div class="login-card">
+        <h2>PG Details</h2>
+
+        {% if pg.image_urls %}
+        <div class="pg-image-collage">
+            {% for image in pg.image_urls[:4] %}
+            <img src="{{ url_for('static', filename=image) }}" alt="PG Image">
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <p><strong>Name:</strong> {{ pg.name }}</p>
+        <p><strong>City:</strong> {{ pg.city|title }}</p>
+        <p><strong>Area:</strong> {{ pg.area|title }}</p>
+        <p><strong>Rent:</strong> {{ pg.rent|inr }}</p>
+        <p><strong>Vacant Seats:</strong> {{ pg.vacant_seats }}</p>
+        <p><strong>Type:</strong> {{ pg.gender }} PG</p>
+        <p><strong>Facilities:</strong> {{ pg.facilities or 'Not listed' }}</p>
+        <p><strong>Warden Contact:</strong> {{ pg.warden_contact or 'N/A' }}</p>
+        <p><strong>Owner Contact:</strong> {{ pg.owner_contact or 'N/A' }}</p>
+
+        {% if pg.lat is not none and pg.lng is not none %}
+        <p><strong>Coordinates:</strong> {{ pg.lat }}, {{ pg.lng }}</p>
+        <div
+            id="pgMap"
+            data-lat="{{ pg.lat }}"
+            data-lng="{{ pg.lng }}"
+            style="height: 250px; margin-top: 12px; border-radius: 8px;"
+        ></div>
+        {% else %}
+        <p class="info-note">Map coordinates are not available for this PG.</p>
+        {% endif %}
+    </div>
+
+    <div class="login-card">
+        <h2>Enroll Now</h2>
+        {% if g.user.role != 'Student' %}
+        <p>Only students can enroll. You are logged in as {{ g.user.role }}.</p>
+        {% else %}
+        <form method="post" id="enrollForm" enctype="multipart/form-data">
+            <input type="text" name="studentName" placeholder="Full Name" value="{{ g.user.name }}" required>
+            <input type="tel" name="contact" placeholder="Contact Number" maxlength="10" pattern="[0-9]{10}" value="{{ g.user.contact or '' }}" required>
+            <input type="email" name="email" placeholder="Email Address" value="{{ g.user.email }}" required>
+            <input type="text" name="college" placeholder="College Name" value="{{ g.user.extra or '' }}" required>
+            <input type="text" name="collegeId" placeholder="College ID / Enrollment Number" required>
+            <label for="collegeIdImage"><strong>College ID Card Image</strong></label>
+            <input id="collegeIdImage" type="file" name="collegeIdImage" accept="image/*" required>
+            <p class="info-note">Upload a clear college ID image (png, jpg, jpeg, gif, webp; max 2 MB).</p>
+            <input type="text" name="address" placeholder="Address" required>
+            <input type="text" name="parentsName" placeholder="Parents Name" required>
+            <input type="tel" name="parentsContact" placeholder="Parents Contact Number" maxlength="10" pattern="[0-9]{10}" required>
+
+            <div class="btn-group">
+                <button class="login-btn" type="submit">Submit</button>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+{% if pg.lat is not none and pg.lng is not none %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const mapElement = document.getElementById("pgMap");
+if (mapElement) {
+    const lat = Number(mapElement.dataset.lat || "0");
+    const lng = Number(mapElement.dataset.lng || "0");
+    const map = L.map(mapElement).setView([lat, lng], 15);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+    L.marker([lat, lng]).addTo(map);
+}
+</script>
+{% endif %}
+{% endblock %}

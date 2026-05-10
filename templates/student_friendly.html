@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div class="logo-box">
+        <div class="logo-text">Student<br>Help</div>
+    </div>
+
+    <h1>Student Friendly Services</h1>
+    <p>Everything a student needs for a safe, affordable, and comfortable PG life.</p>
+</section>
+
+<section class="features">
+    <a class="card card-link" href="{{ url_for('student_help_details', service='Complaints') }}">
+        <h3>Complaints & Feedback</h3>
+        <p>Raise issues and share feedback for better student experience.</p>
+    </a>
+
+    <a class="card card-link" href="{{ url_for('emergency') }}">
+        <h3>Emergency Services</h3>
+        <p>Emergency support and quick access to critical contacts.</p>
+    </a>
+
+    <a class="card card-link" href="{{ url_for('student_help_details', service='Nearby') }}">
+        <h3>Nearby Essentials</h3>
+        <p>Mess, laundry, medical stores, libraries and transport nearby.</p>
+    </a>
+
+    <a class="card card-link" href="{{ url_for('student_help_details', service='Affordable') }}">
+        <h3>Affordable PGs</h3>
+        <p>Budget-friendly PGs with verified pricing and no hidden charges.</p>
+    </a>
+
+    <a class="card card-link" href="{{ url_for('student_help_details', service='Safe') }}">
+        <h3>Safe & Secure</h3>
+        <p>Verified owners, safe locations, CCTV and secure environments.</p>
+    </a>
+
+    <a class="card card-link" href="{{ url_for('student_help_details', service='Communication') }}">
+        <h3>Easy Communication</h3>
+        <p>Direct contact with PG owners without middlemen.</p>
+    </a>
+</section>
+{% endblock %}

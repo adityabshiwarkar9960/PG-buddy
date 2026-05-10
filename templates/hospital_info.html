@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/resources.css') }}">
+<style>
+    .detail-container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 40px;
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        border: 2px solid #f0f0f0;
+    }
+
+    .header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 30px;
+        border-bottom: 3px solid #2980b9;
+        padding-bottom: 20px;
+    }
+
+    .section {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        border-left: 4px solid #e74c3c;
+    }
+
+    .distance-badge {
+        display: inline-block;
+        background: #e74c3c;
+        color: #fff;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-weight: 600;
+        margin: 15px 0;
+    }
+
+    .phone-link {
+        display: inline-block;
+        background: #27ae60;
+        color: #fff;
+        padding: 14px 35px;
+        border-radius: 25px;
+        text-decoration: none;
+        margin: 15px 0;
+        font-weight: 600;
+    }
+
+    .back-btn {
+        display: inline-block;
+        padding: 12px 25px;
+        background: #2980b9;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 25px;
+        margin-bottom: 20px;
+    }
+
+    .pg-details {
+        background: #DFD0B8;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+        border-left: 4px solid #57C785;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <a class="back-btn" href="{{ url_for('hospital_details') }}">Back to Hospitals</a>
+
+    <div class="header">
+        <div style="font-size: 50px;">🏥</div>
+        <div>
+            <h1>{{ hospital.name }}</h1>
+            <p style="color:#666;">{{ hospital.address }}</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Contact Information</h3>
+        <p><strong>Phone:</strong> {{ hospital.phone }}</p>
+        <a class="phone-link" href="tel:{{ hospital.phone }}">Call Hospital</a>
+    </div>
+
+    <div class="section">
+        <h3>Distance from Your PG</h3>
+        <p>This hospital is approximately {{ hospital.distance }} from your enrolled PG.</p>
+        <div class="distance-badge">{{ hospital.distance }}</div>
+    </div>
+
+    <div class="section">
+        <h3>Services Available</h3>
+        <ul>
+            {% for service in hospital.services %}
+            <li>{{ service }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    {% if enrolled_pg %}
+    <div class="pg-details">
+        <h3>Your Enrolled PG Details</h3>
+        <p><strong>PG Name:</strong> {{ enrolled_pg.pg_name }}</p>
+        <p><strong>Location:</strong> {{ enrolled_pg.pg_city }}</p>
+        <p><strong>Monthly Rent:</strong> {{ enrolled_pg.pg_rent|inr }}</p>
+        <p><strong>Enrolled Since:</strong> {{ enrolled_pg.enrolled_at }}</p>
+        <hr style="margin: 15px 0; border: none; border-top: 1px solid #ddd;">
+        <p style="font-size: 14px; color: #666;"><strong>Note:</strong> Many hospitals provide student discounts with valid ID.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+    <h1>Emergency Services</h1>
+    <p>Quick access to essential emergency contacts for students.</p>
+</section>
+
+<section class="features">
+    <a class="card card-link" href="tel:112">
+        <h3>Police</h3>
+        <p><strong>Emergency Number:</strong> 112</p>
+        <p>For safety, theft, harassment or any emergency.</p>
+    </a>
+
+    <a class="card card-link" href="tel:108">
+        <h3>Ambulance</h3>
+        <p><strong>Emergency Number:</strong> 108</p>
+        <p>Immediate medical assistance.</p>
+    </a>
+
+    <a class="card card-link" href="tel:101">
+        <h3>Fire Department</h3>
+        <p><strong>Emergency Number:</strong> 101</p>
+        <p>Fire or gas leakage emergencies.</p>
+    </a>
+
+    <a class="card card-link" href="{{ url_for('hospital_details') }}">
+        <h3>Nearby Hospitals</h3>
+        <p>View hospitals and emergency services near your PG location.</p>
+    </a>
+
+    <div class="card">
+        <h3>Saved Hospital Contact</h3>
+        {% if enrolled_pg and enrolled_pg.nearby_hospital_contact %}
+        <p><strong>{{ enrolled_pg.nearby_hospital_name or 'Hospital' }}</strong></p>
+        <p><a class="inline-link" href="tel:{{ enrolled_pg.nearby_hospital_contact }}">{{ enrolled_pg.nearby_hospital_contact }}</a></p>
+        {% else %}
+        <p>No saved hospital contact yet.</p>
+        {% endif %}
+    </div>
+
+    <a class="card card-link" href="tel:1800-111-656">
+        <h3>Student Helpline</h3>
+        <p><strong>UGC Helpline:</strong> 1800-111-656</p>
+        <p>For student-related mental, academic or safety issues.</p>
+    </a>
+
+    <div class="card">
+        <h3>PG Owner / Warden</h3>
+        {% if enrolled_pg %}
+        <p><strong>Warden:</strong> {{ enrolled_pg.pg_warden_contact or 'Not saved' }}</p>
+        <p><strong>Owner:</strong> {{ enrolled_pg.pg_owner_contact or 'Not saved' }}</p>
+        {% else %}
+        <p>Enroll in a PG to see owner and warden contacts.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

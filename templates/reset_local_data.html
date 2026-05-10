@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main style="max-width:680px; margin:80px auto; padding:32px; background:#fff; border-radius:16px; border:2px solid #f0f0f0; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+    <h1 style="margin-bottom:12px; color:#2980b9; font-size:28px;">Local Data Reset Notes</h1>
+    <p style="margin:8px 0; color:#555;">This Python version stores data in SQLite (`pgbuddy.db`) rather than browser localStorage.</p>
+    <p style="margin:8px 0; color:#555;">To reset app data completely, stop the server and delete `pgbuddy.db` from the Python project folder.</p>
+    <p style="margin-top:16px;"><a class="inline-link" href="{{ url_for('login') }}">Go to Login</a></p>
+</main>
+{% endblock %}

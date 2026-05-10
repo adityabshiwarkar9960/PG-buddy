@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+<style>
+    .student-dashboard {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 36px 20px;
+    }
+
+    .student-dashboard-grid {
+        display: grid;
+        grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
+        gap: 20px;
+        align-items: start;
+    }
+
+    .dashboard-panel {
+        background: #fff;
+        border: 1px solid #e4e7ea;
+        border-radius: 16px;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+        padding: 20px;
+    }
+
+    .profile-panel {
+        position: sticky;
+        top: 18px;
+    }
+
+    .profile-panel.panel-highlight {
+        animation: profileSavedPulse 1.6s ease;
+    }
+
+    @keyframes profileSavedPulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.3);
+            border-color: #27ae60;
+        }
+        100% {
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+            border-color: #e4e7ea;
+        }
+    }
+
+    .pg-card {
+        margin-top: 14px;
+        background: #f8f9fa;
+        border: 1px solid #e4e7ea;
+        border-radius: 12px;
+        padding: 16px;
+    }
+
+    .pg-card h4 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        color: #2980b9;
+    }
+
+    .owner-message-box {
+        margin-top: 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        background: #fff;
+        padding: 10px;
+    }
+
+    .owner-message-box ul {
+        margin: 8px 0 0;
+        padding-left: 18px;
+    }
+
+    .owner-message-box li {
+        margin-bottom: 6px;
+    }
+
+    .exit-btn {
+        display: inline-block;
+        margin-top: 10px;
+        border: none;
+        border-radius: 20px;
+        padding: 10px 16px;
+        background: #e74c3c;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .profile-header h2 {
+        margin: 0;
+        color: #2c3e50;
+    }
+
+    .profile-meta {
+        margin-top: 12px;
+        text-align: left;
+    }
+
+    .profile-view-list {
+        display: grid;
+        gap: 10px;
+    }
+
+    .profile-view-item {
+        margin: 0;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #f8f9fa;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .profile-view-item span {
+        text-align: right;
+        word-break: break-word;
+    }
+
+    .profile-edit-form {
+        margin-top: 12px;
+        text-align: left;
+    }
+
+    .profile-edit-form label {
+        display: block;
+        margin-top: 10px;
+        margin-bottom: 4px;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .profile-edit-form input,
+    .profile-edit-form select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d8dde3;
+        border-radius: 10px;
+        font-size: 14px;
+    }
+
+    .profile-save-btn {
+        width: 100%;
+        margin-top: 14px;
+        border: none;
+        border-radius: 20px;
+        padding: 10px 16px;
+        background: #2980b9;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .profile-edit-cancel-btn {
+        width: 100%;
+        margin-top: 10px;
+        border: none;
+        border-radius: 20px;
+        padding: 10px 16px;
+        background: #7f8c8d;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .profile-toggle-btn,
+    .logout-btn-inline {
+        width: 100%;
+        border: none;
+        border-radius: 20px;
+        padding: 10px 16px;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .profile-toggle-btn {
+        margin-top: 12px;
+        background: #2980b9;
+    }
+
+    .logout-btn-inline {
+        margin-top: 10px;
+        background: #2f3f4f;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    @media (max-width: 980px) {
+        .student-dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .profile-panel {
+            position: static;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section
+    class="student-dashboard"
+    data-open-edit="{{ '1' if request.args.get('edit') == '1' else '0' }}"
+    data-profile-saved="{{ '1' if request.args.get('saved') == '1' else '0' }}"
+>
+    <div class="student-dashboard-grid">
+        <aside class="dashboard-panel profile-panel">
+            <div class="profile-header">
+                <img src="{{ url_for('static', filename='user.png') }}" width="72" height="72" alt="User Icon">
+                <h2>My Profile</h2>
+            </div>
+
+            <div id="profileView" class="profile-view-list">
+                <p class="profile-view-item"><strong>Name:</strong> <span>{{ user.name }}</span></p>
+                <p class="profile-view-item"><strong>Email:</strong> <span>{{ user.email }}</span></p>
+                <p class="profile-view-item"><strong>Contact:</strong> <span>{{ user.contact or 'N/A' }}</span></p>
+                <p class="profile-view-item"><strong>Gender:</strong> <span>{{ user.gender or 'N/A' }}</span></p>
+                <p class="profile-view-item"><strong>College:</strong> <span>{{ user.extra or 'N/A' }}</span></p>
+            </div>
+
+            <form id="profileEditForm" class="profile-edit-form hidden" method="post" action="{{ url_for('update_student_profile') }}">
+                <label for="studentName">Name</label>
+                <input id="studentName" name="studentName" type="text" value="{{ user.name }}" required>
+
+                <label for="studentContact">Contact</label>
+                <input id="studentContact" name="contact" type="text" maxlength="10" pattern="[0-9]{10}" value="{{ user.contact or '' }}" required>
+
+                <label for="studentGender">Gender</label>
+                <select id="studentGender" name="gender" required>
+                    <option value="Male" {% if user.gender == 'Male' %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if user.gender == 'Female' %}selected{% endif %}>Female</option>
+                    <option value="Prefer not to say" {% if user.gender == 'Prefer not to say' %}selected{% endif %}>Prefer not to say</option>
+                </select>
+
+                <label for="studentCollege">College</label>
+                <input id="studentCollege" name="college" type="text" value="{{ user.extra or '' }}" required>
+
+                <button class="profile-save-btn" type="submit">Save Profile</button>
+                <button id="cancelProfileEdit" class="profile-edit-cancel-btn" type="button">Cancel</button>
+            </form>
+
+            <button id="toggleProfileEdit" class="profile-toggle-btn" type="button">Update Profile</button>
+
+            <a href="{{ url_for('logout') }}">
+                <button class="logout-btn-inline" type="button">Logout</button>
+            </a>
+        </aside>
+
+        <div class="dashboard-panel">
+            <h3 class="profile-meta">My Enrolled PG</h3>
+
+            {% if enrollment %}
+            <div class="pg-card">
+            <h4>{{ enrollment.pg_name }}</h4>
+            <p><strong>City:</strong> {{ enrollment.pg_city|title }}</p>
+            <p><strong>Area:</strong> {{ enrollment.pg_area|title }}</p>
+            <p><strong>Rent:</strong> {{ enrollment.pg_rent|inr }}</p>
+            <p><strong>Warden Number:</strong> {{ enrollment.pg_warden_contact or 'N/A' }}</p>
+            <p><strong>Owner Number:</strong> {{ enrollment.pg_owner_contact or 'N/A' }}</p>
+            <p><strong>Enrolled At:</strong> {{ enrollment.enrolled_at }}</p>
+            <p><strong>Student Name:</strong> {{ enrollment.student_name }}</p>
+            <p><strong>Student Contact:</strong> {{ enrollment.contact }}</p>
+            <p><strong>Student Email:</strong> {{ enrollment.email }}</p>
+            <p><strong>College ID:</strong> {{ enrollment.college_id or 'N/A' }}</p>
+            {% if enrollment.college_id_image %}
+            <p><strong>ID Proof:</strong> <a href="{{ url_for('static', filename=enrollment.college_id_image) }}" target="_blank" rel="noopener">View Uploaded ID</a></p>
+            {% endif %}
+            <p><strong>Parents Name:</strong> {{ enrollment.parents_name }}</p>
+            <p><strong>Parents Contact:</strong> {{ enrollment.parents_contact }}</p>
+
+            <div class="owner-message-box">
+                <p><strong>Owner Messages:</strong></p>
+                {% if owner_messages %}
+                <ul>
+                    {% for msg in owner_messages %}
+                    <li>{{ msg.text }} {% if msg.sent_at %}<small>({{ msg.sent_at }})</small>{% endif %}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>No messages yet.</p>
+                {% endif %}
+            </div>
+
+            <form method="post" action="{{ url_for('exit_enrollment', enrollment_id=enrollment.id) }}" onsubmit="return confirm('Exit this PG enrollment?');">
+                <button class="exit-btn" type="submit">Exit PG</button>
+            </form>
+            </div>
+            {% else %}
+            <p>No PG enrolled yet. <a class="inline-link" href="{{ url_for('home') }}">Find a PG now</a>.</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<script>
+    (() => {
+        const dashboardRoot = document.querySelector('.student-dashboard');
+        const toggleBtn = document.getElementById('toggleProfileEdit');
+        const cancelBtn = document.getElementById('cancelProfileEdit');
+        const profileView = document.getElementById('profileView');
+        const editForm = document.getElementById('profileEditForm');
+        const profilePanel = document.querySelector('.profile-panel');
+
+        if (!dashboardRoot || !toggleBtn || !cancelBtn || !profileView || !editForm || !profilePanel) {
+            return;
+        }
+
+        const showEditForm = () => {
+            profileView.classList.add('hidden');
+            editForm.classList.remove('hidden');
+            toggleBtn.classList.add('hidden');
+        };
+
+        const showViewMode = () => {
+            editForm.classList.add('hidden');
+            profileView.classList.remove('hidden');
+            toggleBtn.classList.remove('hidden');
+        };
+
+        toggleBtn.addEventListener('click', showEditForm);
+        cancelBtn.addEventListener('click', showViewMode);
+
+        if (dashboardRoot.dataset.openEdit === '1') {
+            showEditForm();
+        }
+
+        if (dashboardRoot.dataset.profileSaved === '1') {
+            profilePanel.classList.add('panel-highlight');
+            setTimeout(() => {
+                profilePanel.classList.remove('panel-highlight');
+            }, 1700);
+        }
+    })();
+</script>
+{% endblock %}
