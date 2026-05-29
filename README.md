@@ -1,6 +1,6 @@
 
 
-# PG Buddy (Python Version)
+# PG Buddy 
 
 This folder contains a full Python conversion of the original PG Buddy web project.
 
