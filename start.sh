@@ -1,13 +1,32 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-: "Print environment and start gunicorn bound to PORT"
+# Debugging start script for Render: logs environment and starts gunicorn bound to $PORT
+echo "========== START: PG Buddy start.sh =========="
+echo "User: $(whoami)"
+echo "Python: $(which python)"
+echo "Gunicorn version: $(gunicorn --version 2>/dev/null || echo 'gunicorn not found')"
+echo "Environment variables:"
+echo "  PORT=${PORT:-<not set>}"
+echo "  FLASK_DEBUG=${FLASK_DEBUG:-<not set>}"
+echo "  PG_BUDDY_SECRET=${PG_BUDDY_SECRET:+<set>}"
 
-echo "Starting PG Buddy"
-echo "PORT=${PORT:-<not set>}"
-if [ -z "$PORT" ]; then
+if [ -z "${PORT:-}" ]; then
   echo "PORT not set, defaulting to 5000"
   PORT=5000
 fi
 
-exec gunicorn app:app --workers 3 --bind 0.0.0.0:$PORT
+echo "Listening ports before starting gunicorn:"
+if command -v ss >/dev/null 2>&1; then
+  ss -ltnp || true
+else
+  netstat -ltnp 2>/dev/null || true
+fi
+
+echo "Starting gunicorn bound to 0.0.0.0:$PORT"
+exec gunicorn app:app \
+  --workers 3 \
+  --bind 0.0.0.0:$PORT \
+  --access-logfile - \
+  --error-logfile - \
+  --capture-output
