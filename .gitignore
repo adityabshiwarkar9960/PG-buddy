@@ -2,9 +2,12 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.db
 .venv/
 venv/
 .env
 static/uploads/*
 !static/uploads/.gitkeep
+pgbuddy.db
+.env.local
+.vscode/
+.DS_Store

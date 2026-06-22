@@ -9,7 +9,7 @@ from functools import wraps
 from pathlib import Path
 from typing import Any
 
-from flask import Flask, abort, flash, g, redirect, render_template, request, session, url_for
+from flask import Flask, abort, flash, g, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
@@ -24,7 +24,7 @@ ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 DEFAULT_PGS = [
     {
         "name": "Sunrise PG",
-        "area": "nagpur",
+        "area": "Fetri",
         "city": "nagpur",
         "rent": 6000,
         "facilities": "WiFi, Food, Laundry",
@@ -46,7 +46,7 @@ DEFAULT_PGS = [
     },
     {
         "name": "Green Valley PG",
-        "area": "nagpur",
+        "area": "Friends colony",
         "city": "nagpur",
         "rent": 6500,
         "facilities": "Food, Parking",
@@ -57,7 +57,7 @@ DEFAULT_PGS = [
     },
     {
         "name": "Sweet Home PG",
-        "area": "nagpur",
+        "area": "Katol Naka",
         "city": "nagpur",
         "rent": 6000,
         "facilities": "WiFi, Food, Laundry",
@@ -68,7 +68,7 @@ DEFAULT_PGS = [
     },
     {
         "name": "Sai Krupa PG",
-        "area": "nagpur",
+        "area": "Fetri",
         "city": "nagpur",
         "rent": 5000,
         "facilities": "WiFi, Study Room",
@@ -79,7 +79,7 @@ DEFAULT_PGS = [
     },
     {
         "name": "Veesh PG",
-        "area": "nagpur",
+        "area": "friends Colony",
         "city": "nagpur",
         "rent": 6500,
         "facilities": "Food, Parking",
@@ -90,8 +90,8 @@ DEFAULT_PGS = [
     },
     {
         "name": "Ramreet PG",
-        "area": "pune",
-        "city": "pune",
+        "area": "Katol Naka",
+        "city": "Nagpur",
         "rent": 7500,
         "facilities": "WiFi, Food",
         "gender": "Female",
@@ -518,6 +518,39 @@ def ensure_complaints_columns(db: sqlite3.Connection) -> None:
         db.execute("ALTER TABLE complaints ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''")
 
 
+def ensure_users_notification_columns(db: sqlite3.Connection) -> None:
+    columns = {row["name"] for row in db.execute("PRAGMA table_info(users)").fetchall()}
+
+    if "student_notifications_seen_at" not in columns:
+        db.execute("ALTER TABLE users ADD COLUMN student_notifications_seen_at TEXT NOT NULL DEFAULT ''")
+
+
+def ensure_enrollment_requests_table(db: sqlite3.Connection) -> None:
+    """Ensure enrollment_requests table exists."""
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS enrollment_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pg_id INTEGER NOT NULL,
+            student_id INTEGER NOT NULL,
+            student_name TEXT NOT NULL,
+            contact TEXT NOT NULL,
+            email TEXT NOT NULL,
+            college TEXT NOT NULL,
+            college_id TEXT NOT NULL,
+            college_id_image TEXT NOT NULL,
+            address TEXT NOT NULL,
+            parents_name TEXT NOT NULL,
+            parents_contact TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Pending',
+            requested_at TEXT NOT NULL,
+            responded_at TEXT,
+            owner_note TEXT DEFAULT '',
+            FOREIGN KEY (pg_id) REFERENCES pgs(id) ON DELETE CASCADE,
+            FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+
 def init_db() -> None:
     db = get_db()
     db.executescript(
@@ -603,8 +636,10 @@ def init_db() -> None:
         );
         """
     )
+    ensure_users_notification_columns(db)
     ensure_enrollment_security_columns(db)
     ensure_complaints_columns(db)
+    ensure_enrollment_requests_table(db)
     db.execute("UPDATE complaints SET updated_at = created_at WHERE updated_at = '' OR updated_at IS NULL")
     db.execute("UPDATE complaints SET status = 'Pending' WHERE status = '' OR status IS NULL")
     db.commit()
@@ -998,6 +1033,98 @@ def get_owner_complaint_notifications(owner_id: int) -> list[dict[str, Any]]:
     return notifications
 
 
+def get_student_updates_token(student_id: int) -> str:
+    db = get_db()
+    row = db.execute(
+        """
+        SELECT
+            COALESCE((
+                SELECT MAX(m.id)
+                FROM owner_messages m
+                JOIN enrollments e ON e.id = m.enrollment_id
+                WHERE e.student_id = ?
+            ), 0) AS last_msg_id,
+            COALESCE((
+                SELECT MAX(er.id)
+                FROM enrollment_requests er
+                WHERE er.student_id = ?
+            ), 0) AS last_request_id,
+            COALESCE((
+                SELECT MAX(COALESCE(er.responded_at, er.requested_at))
+                FROM enrollment_requests er
+                WHERE er.student_id = ?
+            ), '') AS last_request_at
+        """,
+        (student_id, student_id, student_id),
+    ).fetchone()
+    if row is None:
+        return "0|0|"
+    return f"{row['last_msg_id']}|{row['last_request_id']}|{row['last_request_at']}"
+
+
+def get_owner_updates_token(owner_id: int) -> str:
+    db = get_db()
+    row = db.execute(
+        """
+        SELECT
+            COALESCE((
+                SELECT MAX(c.id)
+                FROM complaints c
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM pgs p
+                    WHERE p.owner_id = ?
+                      AND (
+                          c.pg_id = p.id
+                          OR (
+                              c.pg_name IS NOT NULL
+                              AND lower(trim(c.pg_name)) = lower(trim(p.name))
+                          )
+                      )
+                )
+            ), 0) AS last_complaint_id,
+            COALESCE((
+                SELECT MAX(COALESCE(c.updated_at, c.created_at))
+                FROM complaints c
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM pgs p
+                    WHERE p.owner_id = ?
+                      AND (
+                          c.pg_id = p.id
+                          OR (
+                              c.pg_name IS NOT NULL
+                              AND lower(trim(c.pg_name)) = lower(trim(p.name))
+                          )
+                      )
+                )
+            ), '') AS last_complaint_at,
+            COALESCE((
+                SELECT MAX(er.id)
+                FROM enrollment_requests er
+                JOIN pgs p ON p.id = er.pg_id
+                WHERE p.owner_id = ?
+            ), 0) AS last_request_id,
+            COALESCE((
+                SELECT MAX(COALESCE(er.responded_at, er.requested_at))
+                FROM enrollment_requests er
+                JOIN pgs p ON p.id = er.pg_id
+                WHERE p.owner_id = ?
+            ), '') AS last_request_at,
+            COALESCE((
+                SELECT COUNT(*)
+                FROM enrollment_requests er
+                JOIN pgs p ON p.id = er.pg_id
+                WHERE p.owner_id = ? AND er.status = 'Pending'
+            ), 0) AS pending_count
+        """,
+        (owner_id, owner_id, owner_id, owner_id, owner_id),
+    ).fetchone()
+    if row is None:
+        return "0||0||0"
+    return f"{row['last_complaint_id']}|{row['last_complaint_at']}|{row['last_request_id']}|{row['last_request_at']}|{row['pending_count'] or 0}"
+
+
 def validate_pg_form(existing_images: list[str]) -> tuple[dict[str, Any] | None, str | None]:
     name = request.form.get("pgName", "").strip()
     area = request.form.get("pgArea", "").strip()
@@ -1184,6 +1311,9 @@ def profile():
     enrollment = get_active_enrollment_for_student(g.user["id"])
     enrollment_dict: dict[str, Any] | None = None
     owner_messages: list[dict[str, Any]] = []
+    latest_request: dict[str, Any] | None = None
+    student_notifications: list[dict[str, str]] = []
+    student_notifications_seen_at = str(g.user["student_notifications_seen_at"] or "").strip()
 
     if enrollment is not None:
         enrollment_dict = dict(enrollment)
@@ -1193,13 +1323,76 @@ def profile():
             (enrollment["id"],),
         ).fetchall()
         owner_messages = [dict(message) for message in messages]
+        for msg in owner_messages:
+            student_notifications.append(
+                {
+                    "text": str(msg.get("text", "")).strip() or "New message from PG owner.",
+                    "time": str(msg.get("sent_at", "")).strip(),
+                    "kind": "message",
+                }
+            )
+    else:
+        request_row = get_db().execute(
+            """
+            SELECT er.*, p.name AS pg_name
+            FROM enrollment_requests er
+            JOIN pgs p ON p.id = er.pg_id
+            WHERE er.student_id = ?
+            ORDER BY er.id DESC
+            LIMIT 1
+            """,
+            (g.user["id"],),
+        ).fetchone()
+        if request_row is not None:
+            latest_request = dict(request_row)
+            status = (latest_request.get("status") or "").strip()
+            if status in {"Approved", "Rejected"}:
+                note = ""
+                if status == "Rejected" and latest_request.get("owner_note"):
+                    note = f" Reason: {latest_request['owner_note']}"
+                student_notifications.append(
+                    {
+                        "text": f"Your enrollment request for {latest_request.get('pg_name', 'the PG')} was {status.lower()}.{note}",
+                        "time": str(latest_request.get("responded_at") or latest_request.get("requested_at") or "").strip(),
+                        "kind": "request",
+                    }
+                )
 
     return render_template(
         "profile.html",
         user=g.user,
         enrollment=enrollment_dict,
         owner_messages=owner_messages,
+        latest_request=latest_request,
+        student_notifications=student_notifications,
+        student_notification_count=sum(
+            1
+            for item in student_notifications
+            if not student_notifications_seen_at or str(item.get("time") or "") > student_notifications_seen_at
+        ),
+        student_updates_token=get_student_updates_token(g.user["id"]),
     )
+
+
+@app.get("/api/student/updates-token")
+@login_required
+@role_required("Student")
+def student_updates_token():
+    return jsonify({"token": get_student_updates_token(g.user["id"])})
+
+
+@app.post("/api/student/notifications/seen")
+@login_required
+@role_required("Student")
+def mark_student_notifications_seen():
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    db = get_db()
+    db.execute(
+        "UPDATE users SET student_notifications_seen_at = ? WHERE id = ? AND role = 'Student'",
+        (now, g.user["id"]),
+    )
+    db.commit()
+    return jsonify({"ok": True, "seen_at": now})
 
 @app.post("/student/profile/update")
 @login_required
@@ -1247,13 +1440,118 @@ def exit_enrollment(enrollment_id: int):
         flash("Enrollment not found.", "error")
         return redirect(url_for("profile"))
 
+    pg_row = db.execute("SELECT id, name, owner_id FROM pgs WHERE id = ?", (enrollment["pg_id"],)).fetchone()
+
     db.execute("UPDATE enrollments SET active = 0 WHERE id = ?", (enrollment_id,))
     db.execute("UPDATE pgs SET vacant_seats = vacant_seats + 1, updated_at = ? WHERE id = ?", (utc_now_str(), enrollment["pg_id"]))
+
+    if pg_row is not None and pg_row["owner_id"] is not None:
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        db.execute(
+            """
+            INSERT INTO complaints (user_id, pg_id, name, email, pg_name, type, message, status, owner_note, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, 'Feedback', ?, 'Pending', '', ?, ?)
+            """,
+            (
+                g.user["id"],
+                pg_row["id"],
+                g.user.get("name") or "Student",
+                g.user.get("email") or "",
+                pg_row["name"],
+                f"Student {g.user.get('name') or 'user'} exited the PG and vacated the seat.",
+                now,
+                now,
+            ),
+        )
+
     db.commit()
     flash("You have exited the PG enrollment.", "success")
     return redirect(url_for("profile"))
 
+ #  today 12 5 26 change down
+ 
+@app.post("/student/account/delete")
+@login_required
+@role_required("Student")
+def delete_student_account():
+    db = get_db()
+    user_id = g.user["id"]
+    
+    # First, deactivate all enrollments and free up seats
+    enrollments = db.execute(
+        "SELECT id, pg_id FROM enrollments WHERE student_id = ? AND active = 1",
+        (user_id,),
+    ).fetchall()
+    
+    for enrollment in enrollments:
+        db.execute("UPDATE enrollments SET active = 0 WHERE id = ?", (enrollment["id"],))
+        db.execute(
+            "UPDATE pgs SET vacant_seats = vacant_seats + 1, updated_at = ? WHERE id = ?",
+            (utc_now_str(), enrollment["pg_id"]),
+        )
+    
+    # Delete all inactive enrollments and related data
+    db.execute("DELETE FROM owner_messages WHERE enrollment_id IN (SELECT id FROM enrollments WHERE student_id = ?)", (user_id,))
+    db.execute("DELETE FROM enrollments WHERE student_id = ?", (user_id,))
+    db.execute("DELETE FROM complaints WHERE user_id = ?", (user_id,))
+    
+    # Delete the user account
+    db.execute("DELETE FROM users WHERE id = ? AND role = 'Student'", (user_id,))
+    db.commit()
+    
+    session.clear()
+    flash("Your account has been deleted successfully.", "success")
+    return redirect(url_for("index"))
 
+
+@app.post("/owner/account/delete")
+@login_required
+@role_required("Owner")
+def delete_owner_account():
+    db = get_db()
+    user_id = g.user["id"]
+    
+    # Check for active enrollments in owner's PGs
+    active_enrollments = db.execute(
+        """
+        SELECT COUNT(*) AS count FROM enrollments
+        WHERE pg_id IN (SELECT id FROM pgs WHERE owner_id = ?) AND active = 1
+        """,
+        (user_id,),
+    ).fetchone()
+    
+    if active_enrollments and active_enrollments["count"] > 0:
+        flash(
+            "Cannot delete account while students are enrolled in your PGs. "
+            "Please remove all students first by going to their enrollments.",
+            "error",
+        )
+        return redirect(url_for("owner_dashboard"))
+    
+    # Delete all enrollments (inactive) and related data for this owner's PGs
+    owner_pg_ids = db.execute(
+        "SELECT id FROM pgs WHERE owner_id = ?",
+        (user_id,),
+    ).fetchall()
+    
+    for pg_row in owner_pg_ids:
+        pg_id = pg_row["id"]
+        db.execute("DELETE FROM owner_messages WHERE enrollment_id IN (SELECT id FROM enrollments WHERE pg_id = ?)", (pg_id,))
+        db.execute("DELETE FROM enrollments WHERE pg_id = ?", (pg_id,))
+        db.execute("DELETE FROM complaints WHERE pg_id = ?", (pg_id,))
+    
+    # Delete all PGs owned by this owner
+    db.execute("DELETE FROM pgs WHERE owner_id = ?", (user_id,))
+    
+    # Delete the user account
+    db.execute("DELETE FROM users WHERE id = ? AND role = 'Owner'", (user_id,))
+    db.commit()
+    
+    session.clear()
+    flash("Your account and all associated PGs have been deleted successfully.", "success")
+    return redirect(url_for("index"))
+
+ #  today 12 5 26 change up 
 @app.route("/home")
 @app.route("/home.html")
 def home():
@@ -1345,15 +1643,17 @@ def pg_details(pg_id: int):
             return redirect(url_for("pg_details", pg_id=pg_id))
 
         if current is not None and current["pg_id"] != pg_id:
-            db.execute("UPDATE enrollments SET active = 0 WHERE id = ?", (current["id"],))
-            db.execute(
-                "UPDATE pgs SET vacant_seats = vacant_seats + 1, updated_at = ? WHERE id = ?",
-                (utc_now_str(), current["pg_id"]),
-            )
+            flash("You are already enrolled in another PG. Please exit current PG first.", "error")
+            return redirect(url_for("pg_details", pg_id=pg_id))
 
-        if pg["vacant_seats"] <= 0:
-            db.rollback()
-            flash("No vacant seats are available right now.", "error")
+        # Check if student already has a pending request for this PG
+        existing_request = db.execute(
+            "SELECT id FROM enrollment_requests WHERE pg_id = ? AND student_id = ? AND status = 'Pending'",
+            (pg_id, g.user["id"]),
+        ).fetchone()
+        
+        if existing_request:
+            flash("You already have a pending enrollment request for this PG.", "info")
             return redirect(url_for("pg_details", pg_id=pg_id))
 
         try:
@@ -1366,12 +1666,13 @@ def pg_details(pg_id: int):
             flash(str(error), "error")
             return redirect(url_for("pg_details", pg_id=pg_id))
 
+        # Create an enrollment request instead of direct enrollment
         db.execute(
             """
-            INSERT INTO enrollments (
+            INSERT INTO enrollment_requests (
                 pg_id, student_id, student_name, contact, email, college, college_id,
-                college_id_image, address, parents_name, parents_contact, enrolled_at, active
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                college_id_image, address, parents_name, parents_contact, status, requested_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?)
             """,
             (
                 pg_id,
@@ -1388,13 +1689,9 @@ def pg_details(pg_id: int):
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             ),
         )
-        db.execute(
-            "UPDATE pgs SET vacant_seats = vacant_seats - 1, updated_at = ? WHERE id = ?",
-            (utc_now_str(), pg_id),
-        )
         db.commit()
 
-        flash(f"Successfully enrolled in {pg['name']}.", "success")
+        flash(f"Enrollment request submitted for {pg['name']}. The owner will review and respond soon.", "success")
         return redirect(url_for("profile"))
 
     return render_template("pg_details.html", pg=pg)
@@ -1432,6 +1729,17 @@ def owner_dashboard():
         if (item.get("type") or "").strip().lower() == "complaint"
         and (item.get("status") or "").strip().lower() != "resolved"
     )
+    
+    # Get pending enrollment requests
+    db = get_db()
+    pending_enrollments = db.execute("""
+        SELECT COUNT(*) as count FROM enrollment_requests er
+        JOIN pgs p ON p.id = er.pg_id
+        WHERE p.owner_id = ? AND er.status = 'Pending'
+    """, (g.user["id"],)).fetchone()
+    
+    pending_enrollments_count = pending_enrollments["count"] if pending_enrollments else 0
+
     return render_template(
         "owner_dashboard.html",
         owner=g.user,
@@ -1439,6 +1747,8 @@ def owner_dashboard():
         edit_pg=edit_pg,
         complaint_notifications=complaint_notifications,
         notification_badge_count=notification_badge_count,
+        pending_enrollments_count=pending_enrollments_count,
+        owner_updates_token=get_owner_updates_token(g.user["id"]),
     )
 
 @app.post("/owner/profile/update")
@@ -1757,6 +2067,167 @@ def owner_update_complaint_status(complaint_id: int):
     db.commit()
     flash("Complaint status updated and student notified.", "success")
     return redirect(url_for("owner_dashboard"))
+
+
+@app.route("/owner/enrollment-requests")
+@app.route("/owner/enrollment-requests.html")
+@login_required
+@role_required("Owner")
+def owner_enrollment_requests():
+    db = get_db()
+    requests = db.execute(
+        """
+        SELECT
+            er.id,
+            er.pg_id,
+            er.student_id,
+            er.student_name,
+            er.email,
+            er.contact,
+            er.college,
+            er.college_id,
+            er.college_id_image,
+            er.address,
+            er.parents_name,
+            er.parents_contact,
+            er.status,
+            er.requested_at,
+            er.responded_at,
+            er.owner_note,
+            p.name as pg_name,
+            p.vacant_seats
+        FROM enrollment_requests er
+        JOIN pgs p ON p.id = er.pg_id
+        WHERE p.owner_id = ?
+        ORDER BY er.status DESC, er.requested_at DESC
+        """,
+        (g.user["id"],),
+    ).fetchall()
+
+    pending_requests = [dict(r) for r in requests if r["status"] == "Pending"]
+    approved_requests = [dict(r) for r in requests if r["status"] == "Approved"]
+    rejected_requests = [dict(r) for r in requests if r["status"] == "Rejected"]
+
+    return render_template(
+        "enrollment_requests.html",
+        pending_requests=pending_requests,
+        approved_requests=approved_requests,
+        rejected_requests=rejected_requests,
+        notification_count=len(pending_requests),
+        owner_updates_token=get_owner_updates_token(g.user["id"]),
+    )
+
+
+@app.get("/api/owner/updates-token")
+@login_required
+@role_required("Owner")
+def owner_updates_token():
+    return jsonify({"token": get_owner_updates_token(g.user["id"])})
+
+
+@app.post("/owner/enrollment-request/<int:request_id>/approve")
+@login_required
+@role_required("Owner")
+def owner_approve_enrollment(request_id: int):
+    db = get_db()
+    req = db.execute(
+        """
+        SELECT er.*, p.owner_id, p.vacant_seats
+        FROM enrollment_requests er
+        JOIN pgs p ON p.id = er.pg_id
+        WHERE er.id = ?
+        """,
+        (request_id,),
+    ).fetchone()
+
+    if req is None:
+        flash("Enrollment request not found.", "error")
+        return redirect(url_for("owner_enrollment_requests"))
+    if req["owner_id"] != g.user["id"]:
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("owner_enrollment_requests"))
+    if req["status"] != "Pending":
+        flash(f"Request already {req['status'].lower()}.", "info")
+        return redirect(url_for("owner_enrollment_requests"))
+    if req["vacant_seats"] <= 0:
+        flash("No vacant seats available in this PG.", "error")
+        return redirect(url_for("owner_enrollment_requests"))
+
+    current = get_active_enrollment_for_student(req["student_id"])
+    if current is not None:
+        db.execute(
+            "UPDATE enrollment_requests SET status = 'Rejected', responded_at = ?, owner_note = ? WHERE id = ?",
+            (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Student already enrolled in another PG.", request_id),
+        )
+        db.commit()
+        flash("Request rejected because student is already enrolled in another PG.", "error")
+        return redirect(url_for("owner_enrollment_requests"))
+
+    db.execute(
+        "UPDATE enrollment_requests SET status = 'Approved', responded_at = ? WHERE id = ?",
+        (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), request_id),
+    )
+    db.execute(
+        """
+        INSERT INTO enrollments (
+            pg_id, student_id, student_name, contact, email, college, college_id,
+            college_id_image, address, parents_name, parents_contact, enrolled_at, active
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+        """,
+        (
+            req["pg_id"],
+            req["student_id"],
+            req["student_name"],
+            req["contact"],
+            req["email"],
+            req["college"],
+            req["college_id"],
+            req["college_id_image"],
+            req["address"],
+            req["parents_name"],
+            req["parents_contact"],
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        ),
+    )
+    db.execute(
+        "UPDATE pgs SET vacant_seats = vacant_seats - 1, updated_at = ? WHERE id = ?",
+        (utc_now_str(), req["pg_id"]),
+    )
+    db.commit()
+    flash(f"Enrollment request approved for {req['student_name']}.", "success")
+    return redirect(url_for("owner_enrollment_requests"))
+
+
+@app.post("/owner/enrollment-request/<int:request_id>/reject")
+@login_required
+@role_required("Owner")
+def owner_reject_enrollment(request_id: int):
+    reason = request.form.get("reason", "").strip()
+    db = get_db()
+    req = db.execute(
+        """
+        SELECT er.id, er.student_name, p.owner_id
+        FROM enrollment_requests er
+        JOIN pgs p ON p.id = er.pg_id
+        WHERE er.id = ?
+        """,
+        (request_id,),
+    ).fetchone()
+
+    if req is None:
+        flash("Enrollment request not found.", "error")
+        return redirect(url_for("owner_enrollment_requests"))
+    if req["owner_id"] != g.user["id"]:
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("owner_enrollment_requests"))
+
+    db.execute(
+        "UPDATE enrollment_requests SET status = 'Rejected', responded_at = ?, owner_note = ? WHERE id = ? AND status = 'Pending'",
+        (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), reason, request_id),
+    )
+    db.commit()
+    flash(f"Enrollment request rejected for {req['student_name']}.", "success")
+    return redirect(url_for("owner_enrollment_requests"))
 
 
 @app.route("/complaints", methods=["GET", "POST"])

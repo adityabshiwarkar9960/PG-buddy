@@ -248,6 +248,21 @@
         background: #7f8c8d;
     }
 
+    .delete-account-btn-owner {
+        border: none;
+        border-radius: 24px;
+        padding: 10px 16px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        color: #fff;
+        background: #c0392b;
+    }
+
+    .delete-account-btn-owner:hover {
+        background: #a93226;
+    }
+
     .map-box {
         border: 1px solid #e0e0e0;
         border-radius: 10px;
@@ -400,7 +415,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-container">
+<div class="dashboard-container" data-updates-token="{{ owner_updates_token or '' }}">
     <div class="dashboard-header">
         <h1>PG Owner Dashboard</h1>
     </div>
@@ -422,7 +437,13 @@
             </div>
             <div class="button-group">
                 <button type="submit">Update Profile</button>
+                <a href="{{ url_for('logout') }}">Logout</a>
             </div>
+            <form method="post" action="{{ url_for('delete_owner_account') }}" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.\n\nIMPORTANT: All students must be removed from your PGs first. Any inactive enrollments and associated data will also be deleted.');">
+                <div class="button-group">
+                    <button class="delete-account-btn-owner" type="submit">Delete Account</button>
+                </div>
+            </form>
         </form>
     </div>
 
@@ -433,6 +454,12 @@
             <span class="notification-badge">{{ notification_badge_count }}</span>
             {% endif %}
         </button>
+        <a href="{{ url_for('owner_enrollment_requests') }}" class="notification-toggle" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; margin-right: 10px;">
+            📋
+            {% if pending_enrollments_count > 0 %}
+            <span class="notification-badge">{{ pending_enrollments_count }}</span>
+            {% endif %}
+        </a>
 
         <div class="notification-panel hidden" id="notificationPanel">
             <h3>Notifications</h3>
@@ -647,6 +674,70 @@ function setOwnerLocationStatus(message, isError = false) {
     el.style.color = isError ? "#e74c3c" : "#555";
 }
 
+const LOCATION_FALLBACK_SOURCES = [
+    {
+        url: "https://ipapi.co/json/",
+        parse: function (data) {
+            return { lat: Number(data.latitude), lng: Number(data.longitude) };
+        },
+    },
+    {
+        url: "https://ipwho.is/?output=json",
+        parse: function (data) {
+            return { lat: Number(data.latitude), lng: Number(data.longitude) };
+        },
+    },
+    {
+        url: "https://get.geojs.io/v1/ip/geo.json",
+        parse: function (data) {
+            return { lat: Number(data.latitude), lng: Number(data.longitude) };
+        },
+    },
+];
+
+function getGeolocationErrorMessage(error) {
+    if (!error) {
+        return "Could not fetch current location.";
+    }
+
+    switch (error.code) {
+        case error.PERMISSION_DENIED:
+            return "Location permission was blocked by the browser.";
+        case error.POSITION_UNAVAILABLE:
+            return "Your device could not determine the current location.";
+        case error.TIMEOUT:
+            return "Fetching the current location timed out.";
+        default:
+            return error.message ? `Could not fetch current location: ${error.message}` : "Could not fetch current location.";
+    }
+}
+
+async function fetchApproximateLocation() {
+    let lastError = null;
+
+    for (const source of LOCATION_FALLBACK_SOURCES) {
+        try {
+            const response = await fetch(source.url, { cache: "no-store" });
+            if (!response.ok) {
+                throw new Error(`Location lookup failed with status ${response.status}.`);
+            }
+
+            const data = await response.json();
+            const location = source.parse(data);
+
+            if (Number.isFinite(location.lat) && Number.isFinite(location.lng)) {
+                return location;
+            }
+
+            throw new Error("Location lookup returned invalid coordinates.");
+        } catch (error) {
+            lastError = error;
+        }
+    }
+
+    throw lastError || new Error("Unable to determine an approximate location.");
+}
+
 function setMapSelection(lat, lng, zoom = 15) {
     const latInput = document.getElementById("pgLat");
     const lngInput = document.getElementById("pgLng");
@@ -686,27 +777,46 @@ function initOwnerMap() {
     }
 }
 
-function setCurrentLocation() {
-    if (!navigator.geolocation) {
-        setOwnerLocationStatus("Geolocation is not supported by your browser.", true);
-        return;
-    }
-
+async function setCurrentLocation() {
     initOwnerMap();
     setOwnerLocationStatus("Fetching your current location...");
 
-    navigator.geolocation.getCurrentPosition(
-        function (position) {
+    if (navigator.geolocation) {
+        try {
+            const position = await new Promise(function (resolve, reject) {
+                navigator.geolocation.getCurrentPosition(
+                    resolve,
+                    reject,
+                    { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+                );
+            });
+
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             setMapSelection(lat, lng, 16);
             setOwnerLocationStatus(`Current location selected: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-        },
-        function (_error) {
-            setOwnerLocationStatus("Could not fetch current location. You can click on the map manually.", true);
-        },
-        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
-    );
+            return;
+        } catch (error) {
+            try {
+                const fallback = await fetchApproximateLocation();
+                setMapSelection(fallback.lat, fallback.lng, 14);
+                setOwnerLocationStatus(`Location access was blocked. Using approximate network location: ${fallback.lat.toFixed(6)}, ${fallback.lng.toFixed(6)}.`);
+                return;
+            } catch (_fallbackError) {
+                const reason = getGeolocationErrorMessage(error);
+                setOwnerLocationStatus(`${reason} You can click on the map manually.`, true);
+                return;
+            }
+        }
+    }
+
+    try {
+        const fallback = await fetchApproximateLocation();
+        setMapSelection(fallback.lat, fallback.lng, 14);
+        setOwnerLocationStatus(`Browser geolocation is not available. Using approximate network location: ${fallback.lat.toFixed(6)}, ${fallback.lng.toFixed(6)}.`);
+    } catch (_error) {
+        setOwnerLocationStatus("Geolocation is not supported by your browser. You can click on the map manually.", true);
+    }
 }
 
 function bindImagePreview() {
@@ -754,6 +864,29 @@ window.addEventListener("DOMContentLoaded", function () {
             }
         });
     }
+
+    const root = document.querySelector('.dashboard-container');
+    let baselineToken = root ? (root.dataset.updatesToken || '') : '';
+
+    const pollForUpdates = async () => {
+        try {
+            const response = await fetch('/api/owner/updates-token', { cache: 'no-store' });
+            if (!response.ok) return;
+            const data = await response.json();
+            const latest = (data && data.token) ? String(data.token) : '';
+            if (baselineToken && latest && latest !== baselineToken) {
+                window.location.reload();
+                return;
+            }
+            if (!baselineToken && latest) {
+                baselineToken = latest;
+            }
+        } catch (_error) {
+            // Ignore polling errors and try again in next cycle.
+        }
+    };
+
+    window.setInterval(pollForUpdates, 5000);
 });
 </script>
 {% endblock %}
