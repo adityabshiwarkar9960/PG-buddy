@@ -1,7 +1,4 @@
-
-
 # PG Buddy 
-
 This folder contains a full Python conversion of the original PG Buddy web project.
 
 - Framework: Flask
@@ -30,7 +27,8 @@ The Python app includes all major modules from the original project in backend f
 8. Student help details pages
 9. Emergency + nearby hospitals + hospital details
 10. Static support pages (affordable, safe-secure, nearby-essentials, easy-communication)
-
+11. Easy for communication and support
+ 
 Legacy route aliases are supported, including:
 
 - /index.html, /login.html, /home.html, /profile.html
