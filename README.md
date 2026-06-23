@@ -55,19 +55,6 @@ python -m venv .venv
 powershell
 pip install -r requirements.txt
 
-
-4. Start app:
-
-powershell
-python app.py
-
-
-5. Open browser:
-
-text
-http://127.0.0.1:5000
-
-
 ## Notes
 
 1. Default PG listings are auto-seeded on first run.
