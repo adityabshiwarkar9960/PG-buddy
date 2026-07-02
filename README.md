@@ -1,6 +1,7 @@
 # PG Buddy 
 This folder contains a full Python conversion of the original PG Buddy web project.
 
+#Features
 - Framework: Flask
 - Database: SQLite (pgbuddy.db)
 - Auth: Session-based login with hashed passwords
