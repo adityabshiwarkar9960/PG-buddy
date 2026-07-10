@@ -8,7 +8,7 @@ This folder contains a full Python conversion of the original PG Buddy web proje
 - Storage: Database-backed users, PGs, enrollments, owner messages, complaints
 - Assets: CSS and image assets copied into static/ 
 
-## What Was Converted
+## What Was Converted:
 
 The Python app includes all major modules from the original project in backend form:
 
@@ -52,7 +52,7 @@ python -m venv .venv
 3. Install dependencies:
 
 powershell
-pip install -r requirements.txt
+pip install -r requirements.txt 
 
 ## Notes
 
