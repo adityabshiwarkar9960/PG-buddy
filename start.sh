@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Debugging start script for Render: logs environment and starts gunicorn bound to $PORT
+# Render start script: logs environment and starts gunicorn bound to $PORT
 echo "========== START: PG Buddy start.sh =========="
 echo "User: $(whoami)"
 echo "Python: $(which python)"
@@ -23,7 +23,7 @@ else
   netstat -ltnp 2>/dev/null || true
 fi
 
-WORKERS="${WEB_CONCURRENCY:-1}"
+WORKERS=1
 
 echo "Starting gunicorn bound to 0.0.0.0:$PORT with $WORKERS worker(s)"
 exec gunicorn app:app \
