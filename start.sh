@@ -23,9 +23,11 @@ else
   netstat -ltnp 2>/dev/null || true
 fi
 
-echo "Starting gunicorn bound to 0.0.0.0:$PORT"
+WORKERS="${WEB_CONCURRENCY:-1}"
+
+echo "Starting gunicorn bound to 0.0.0.0:$PORT with $WORKERS worker(s)"
 exec gunicorn app:app \
-  --workers 3 \
+  --workers "$WORKERS" \
   --bind 0.0.0.0:$PORT \
   --access-logfile - \
   --error-logfile - \
